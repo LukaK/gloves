@@ -1,0 +1,20 @@
+---
+default_stages: [commit, push]
+fail_fast: true
+
+repos:
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.29.0
+    hooks:
+      - id: yamllint
+        # args: [--strict, -c=.config/yamllint.yaml]
+        args: [-c=.config/yamllint.yaml]
+        files: \.(yaml|yml)$
+
+  # TODO: Fix ansible-lint
+  # - repo: https://github.com/ansible-community/ansible-lint.git
+  #   rev: v6.21.1
+  #   hooks:
+  #     - id: ansible-lint
+  #       files: \.(yaml|yml)$
