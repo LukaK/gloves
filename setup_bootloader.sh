@@ -78,15 +78,11 @@ function main {
         exit 1
     fi
 
-    echo "System setup started"
-
     update_initramfs
 
     set_root_password
 
     setup_bootloader "$disc"
-
-    echo "System setup completed successfully"
 }
 
 main "$@"

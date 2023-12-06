@@ -52,6 +52,8 @@ function bootstrap_system {
     genfstab -U /mnt >> /mnt/etc/fstab
 }
 
+# TODO: Uncomment reboot
+# TODO: Ensure that directory is where this script is
 function chroot_and_execute {
     local disc="$1"
     echo "Copying setup script in chroot environment"
