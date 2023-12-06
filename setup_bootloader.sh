@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 
-# TODO: Change this so that it is idempotent
 function update_initramfs {
     echo "Updating initramfs"
-    sed -i -e "/MODULES/s/()/(btrfs)/" -e "/HOOKS/s/filesystems/encrypt filesystems/" /etc/mkinitcpio.conf
+    sed -i -e "/MODULES/s/()/(btrfs)/" -e "/HOOKS/s/block filesystems/block encrypt filesystems/" /etc/mkinitcpio.conf
 
     # NOTE: Issue with failing return code when everything is ok
     mkinitcpio -p linux || true
