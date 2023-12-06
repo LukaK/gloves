@@ -69,8 +69,7 @@ function chroot_and_execute {
     # reboot
 }
 
-
-# TODO: Add chroot to this shell with exec
+# TODO: Add root password entry in the beginning of the script?
 function main {
 
     # exit 1 on any one failed command
