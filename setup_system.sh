@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function setup_filesystems {
+function setup_and_mount_filesystems {
 
     local disc="$1"
 
@@ -27,9 +27,6 @@ function setup_filesystems {
     pushd /mnt && btrfs subvolume create @ && btrfs subvolume create @home && popd
     umount /mnt
 
-}
-
-function mount_partitions {
     echo "Mounting partitions"
 
     mount -o noatime,space_cache=v2,compress=zstd,ssd,discard=async,subvol=@ /dev/mapper/root /mnt
@@ -55,6 +52,7 @@ function bootstrap_system {
 }
 
 
+# TODO: Add chroot to this shell with exec
 function main {
 
     # exit 1 on any one failed command
@@ -83,9 +81,7 @@ function main {
         exit 1
     fi
 
-    setup_filesystems ${disc}
-
-    mount_partitions
+    setup_and_mount_filesystems ${disc}
 
     bootstrap_system
 
