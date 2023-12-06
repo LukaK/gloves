@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# TODO: redirect outputs
 function setup_and_mount_filesystems {
 
     local disc="$1"
@@ -59,9 +60,9 @@ function main {
     set -e
     set -o pipefail
 
-    uset -v disc
+    unset -v disc
 
-    while getopts 'u:d:h' opt; do
+    while getopts 'd:h' opt; do
         case "$opt" in
             d)
                 declare -r disc="$OPTARG"
@@ -87,4 +88,4 @@ function main {
 
 }
 
-main()
+main "$@"

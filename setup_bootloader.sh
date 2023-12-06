@@ -5,28 +5,22 @@
 function update_initramfs {
     echo "Updating initramfs"
     sed -i -e "/MODULES/s/()/(btrfs)/" -e "/HOOKS/s/filesystems/encrypt filesystems/" /etc/mkinitcpio.conf
-    mkinitcpio -p linux
+    mkinitcpio -p linux || true
 }
 
 function set_root_password {
-    echo "Setting root password"
-    chpasswd root
+    echo "Updating root password"
+    IFS= read -rs -p "Enter password:" password
+    echo "root:$password" | chpasswd
 }
 
-function setup_sshd {
-    echo "Installing ssh daemon"
-    pacman -Sy openssh
-
-    echo "Enabling sshd"
-    systemctl enable --now sshd
-}
 
 function setup_bootloader {
 
     local disc="$1"
     local partition="$(fdisk -l $disc | tail -1 | awk '{print $1}')"
-    local uuiddevice="$(blkid --output value ${partition} | head -n 1)/"
-    local uuidroot="$(blkid --output value /dev/mapper/root | head -n 1)/"
+    local uuiddevice="$(blkid --output value ${partition} | head -n 1)"
+    local uuidroot="$(blkid --output value /dev/mapper/root | head -n 1)"
 
     echo "Installing systemd bootloader"
     bootctl --path=/boot install
@@ -36,26 +30,24 @@ function setup_bootloader {
     echo "uuiddevice: $uuiddevice"
     echo "uuidroot: $uuidroot"
 
-    # TODO: Check indentation
-    echo >> /boot/loader/loader.conf << EOF
-        timeout 5
-        default arch
-    EOF
+    # update loader configuration
+    printf "timeout 5\ndefault arch\n" > /boot/loader/loader.conf
 
-    echo > /boot/loader/entries/arch.conf << EOF
+    local arch_configuration="
         title Arch Linux
         linux /vmlinuz-linux
         initrd /initramfs-linux.img
-        options cryptdevice=UUID=${uuiddevice}:root root=UUID=${uuidroot} rootflags=subvol=@ rw
-    EOF
+        options cryptdevice=UUID=$uuiddevice:root root=UUID=$uuidroot rootflags=subvol=@ rw
+    "
+    echo "$arch_configuration" | sed -e '/^[[:space:]]*$/d' -e 's/^[[:space:]]*//' > /boot/loader/entries/arch.conf
 
-    echo > /boot/loader/entries/arch-fallback.conf << EOF
-        title Arch Linux
+    local arch_configuration="
+        title Arch Linux Fallback
         linux /vmlinuz-linux
         initrd /initramfs-linux-fallback.img
         options cryptdevice=UUID=$uuiddevice:root root=UUID=$uuidroot rootflags=subvol=@ rw
-    EOF
-
+    "
+    echo "$arch_configuration" | sed -e '/^[[:space:]]*$/d' -e 's/^[[:space:]]*//' > /boot/loader/entries/arch-fallback.conf
 }
 
 function main {
@@ -64,9 +56,9 @@ function main {
     set -e
     set -o pipefail
 
-    uset -v disc
+    unset -v disc
 
-    while getopts 'u:d:h' opt; do
+    while getopts 'd:h' opt; do
         case "$opt" in
             d)
                 declare -r disc="$OPTARG"
@@ -92,11 +84,9 @@ function main {
 
     set_root_password
 
-    setup_sshd
-
     setup_bootloader "$disc"
 
     echo "System setup completed successfully"
 }
 
-main()
+main "$@"
