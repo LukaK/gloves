@@ -66,8 +66,11 @@ function chroot_and_execute {
     echo "Removing setup script"
     rm /mnt/setup_bootloader.sh
 
+    echo "Unmount partitions"
+    umount -R /mnt
+
     echo "Rebooting the system"
-    # reboot
+    reboot
 }
 
 # TODO: Add root password entry in the beginning of the script?
