@@ -86,6 +86,8 @@ function main {
 
     setup_bootloader "$disc"
 
+    chroot_and_execute "$disc"
+
     echo "System setup completed successfully"
 }
 

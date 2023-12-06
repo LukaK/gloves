@@ -52,6 +52,21 @@ function bootstrap_system {
     genfstab -U /mnt >> /mnt/etc/fstab
 }
 
+function chroot_and_execute {
+    local disc="$1"
+    echo "Copying setup script in chroot environment"
+    cp setup_bootloader.sh /mnt
+
+    echo "Executing setup script"
+    arch-chroot /mnt /bin/bash -c "bash setup_bootloader.sh -d ${disc}"
+
+    echo "Removing setup script"
+    rm /mnt/setup_bootloader.sh
+
+    echo "Rebooting the system"
+    # reboot
+}
+
 
 # TODO: Add chroot to this shell with exec
 function main {
@@ -82,9 +97,11 @@ function main {
         exit 1
     fi
 
-    setup_and_mount_filesystems ${disc}
+    setup_and_mount_filesystems "${disc}"
 
     bootstrap_system
+
+    chroot_and_execute "${disc}"
 
 }
 
