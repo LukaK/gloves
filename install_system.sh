@@ -26,7 +26,7 @@ function setup_and_mount_filesystems {
     # create subvolumes
     echo "Creating btrfs subvolumes"
     mount /dev/mapper/root /mnt
-    pushd /mnt && btrfs subvolume create @ > /dev/null && btrfs subvolume create @home > /dev/null && popd
+    pushd /mnt > /dev/null && btrfs subvolume create @ > /dev/null && btrfs subvolume create @home > /dev/null && popd > /dev/null
     umount /mnt
 
     echo "Mounting partitions"
@@ -53,23 +53,24 @@ function bootstrap_system {
     genfstab -U /mnt >> /mnt/etc/fstab
 }
 
+# TODO: Uncommend reboot and unmount steps
 # TODO: Ensure that directory is where this script is
 function chroot_and_execute {
     local disc="$1"
     echo "Copying setup script in chroot environment"
-    cp setup_bootloader.sh /mnt
+    cp setup_system.yaml /mnt
 
     echo "Executing setup script"
-    arch-chroot /mnt /bin/bash -c "bash setup_bootloader.sh -d ${disc}"
+    arch-chroot /mnt /bin/bash -c "ansible-playbook -e \"disc=${disc}\" setup_system.yaml"
 
-    echo "Removing setup script"
-    rm /mnt/setup_bootloader.sh
-
-    echo "Unmount partitions"
-    umount -R /mnt
-
-    echo "Rebooting the system"
-    reboot
+    # echo "Removing setup script"
+    # rm /mnt/setup_system.yaml
+    #
+    # echo "Unmount partitions"
+    # umount -R /mnt
+    #
+    # echo "Rebooting the system"
+    # reboot
 }
 
 # TODO: Add root password entry in the beginning of the script?

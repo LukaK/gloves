@@ -1,0 +1,100 @@
+---
+
+- name: Check variables
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+    - name: Ensure disc variable is set
+      ansible.builtin.assert:
+        that: disc is defined
+        fail_msg: "Disc variable is not set"
+
+- name: Create inital ram disc image
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+    # TODO: Fix regex for modules to check if btrfs module is allready there
+    - name: Update initramfs configuration
+      ansible.builtin.lineinfile:
+        path: /etc/mkinitcpio.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        backrefs: true
+      loop:
+        - {regexp: '^MODULES=()', line: 'MODULES=(btrfs)'}
+        - {regexp: '^HOOKS=(.*) block filesystems (.*)$', line: 'HOOKS=\1 block encrypt filesystems \2'}
+
+
+    # TODO: Trigger it with handlers
+    # TODO: Uncomment fail condition when issue with exit codes is fixed
+    - name: Execute mkinitcpio command
+      ansible.builtin.command: /usr/bin/mkinitcpio -p linux
+      register: mkinitcpio_result
+      changed_when: true
+      # failed_when: mkinitcpio_result.rc != 0
+      failed_when: false
+
+- name: Configure bootloader
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+
+    - name: Find disc uuid information
+      set_fact:
+        rootuuid: "{{ ansible_facts.devices['dm-0']['links']['uuids'][0] }}"
+        deviceuuid: "{{ item.value['links']['uuids'][0] }}"
+      with_dict: "{{ ansible_facts.devices[disc | split('/') | last]['partitions'] }}"
+      when: "(item.value['links']['uuids'][0] | length) == 36"
+
+
+    - name: Install systemd bootloader
+      ansible.builtin.command: /usr/bin/bootctl --path=/boot install
+      register: bootctl_result
+      failed_when: bootctl_result.rc != 0
+      changed_when: true
+
+
+    - name: Configure boot loader
+      ansible.builtin.blockinfile:
+        path: /boot/loader/loader.conf
+        block: |
+          timeout 5
+          default arch
+
+
+    - name: Configure arch entry
+      ansible.builtin.blockinfile:
+        path: /boot/loader/entries/arch.conf
+        create: true
+        block: |
+          title Arch Linux
+          linux /vmlinuz-linux
+          initrd /initramfs-linux.img
+          options cryptdevice=UUID={{ deviceuuid }}:root root=UUID={{ rootuuid }} rootflags=subvol=@ rw
+
+
+    - name: Configure arch fallback entry
+      ansible.builtin.blockinfile:
+        path: /boot/loader/entries/arch-fallback.conf
+        create: true
+        block: |
+          title Arch Linux Fallback
+          linux /vmlinuz-linux
+          initrd /initramfs-linux-fallback.img
+          options cryptdevice=UUID={{ deviceuuid }}:root root=UUID={{ rootuuid }} rootflags=subvol=@ rw
+
+
+# TODO: Implement
+# - name: User management
+#   hosts: localhost
+#   connection: local
+#   gather_facts: false
+#   tasks:
+#
+#     - name: Update root password

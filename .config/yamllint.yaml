@@ -1,0 +1,10 @@
+---
+# extending default configuration
+extends: default
+
+rules:
+
+  # changing line length level to warning
+  line-length:
+    max: 80
+    level: warning
