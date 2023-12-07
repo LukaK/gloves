@@ -1,4 +1,5 @@
 ---
+# TODO: Add other core packages
 
 
 - name: Install core packages and services
@@ -8,8 +9,9 @@
   tasks:
 
     - name: Install system packages
-      ansible.builtin.package:
+      community.general.pacman:
         state: present
+        update_cache: true
         name:
           - base-devel
           - linux-headers
@@ -36,6 +38,7 @@
           - os-prober
           - reflector
           - pacman-contrib
+          - docker
 
 
     - name: Start acpid
@@ -51,6 +54,12 @@
         state: started
         enabled: true
 
+    - name: Start docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
 
     - name: Start fstrim
       ansible.builtin.service:
@@ -58,14 +67,15 @@
         state: started
         enabled: true
 
-
+    # TODO: Fix nftables
     - name: Install network tools
-      ansible.builtin.package:
+      community.general.pacman:
         state: present
+        update_cache: true
         name:
           - dnsutils
           - openbsd-netcat
-          - iptables-nft
+          # - iptables-nft
           - ipset
           - net-tools
           - networkmanager
@@ -82,8 +92,9 @@
 
 
     - name: Install core services
-      ansible.builtin.package:
+      community.general.pacman:
         state: present
+        update_cache: true
         name:
           - cups
           - cups-pdf
@@ -107,8 +118,9 @@
 
     # NOTE: Remove rsync and rclone when you setup backup on another server
     - name: Install common utilities
-      ansible.builtin.package:
+      community.general.pacman:
         state: present
+        update_cache: true
         name:
           - zip
           - unzip
@@ -124,16 +136,25 @@
           # - nss-mdns
 
 
+    - name: Start sshd
+      ansible.builtin.service:
+        name: sshd
+        state: started
+        enabled: true
+
+
     - name: Install fonts
-      ansible.builtin.package:
+      community.general.pacman:
         state: present
+        update_cache: true
         name:
           - terminus-font
 
 
     - name: Install virtualization tools
-      ansible.builtin.package:
+      community.general.pacman:
         state: present
+        update_cache: true
         name:
           - virt-manager
           - qemu-full

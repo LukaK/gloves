@@ -90,6 +90,10 @@
           options cryptdevice=UUID={{ deviceuuid }}:root root=UUID={{ rootuuid }} rootflags=subvol=@ rw
 
 
+- name: Include code packages install
+  ansible.builtin.import_playbook: install_core_packages.yaml
+
+
 - name: User management
   hosts: localhost
   connection: local
@@ -99,10 +103,12 @@
     - name: root_password
       prompt: "Enter root password"
       private: true
+      confirm: true
 
     - name: luka_password
       prompt: "Enter luka password"
       private: true
+      confirm: true
 
   tasks:
 
@@ -128,6 +134,3 @@
         group: root
         mode: '0440'
         line: 'luka ALL=(ALL) ALL'
-
-- name: Include code packages install
-  ansible.builtin.import_playbook: install_core_packages.yaml
