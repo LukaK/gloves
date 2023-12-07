@@ -100,10 +100,34 @@
       prompt: "Enter root password"
       private: true
 
+    - name: luka_password
+      prompt: "Enter luka password"
+      private: true
+
   tasks:
 
     - name: Update root password
       ansible.builtin.user:
         name: root
         update_password: always
-        password: "{{root_password}}"
+        password: "{{ root_password | password_hash }}"
+
+    - name: Add user luka
+      ansible.builtin.user:
+        name: luka
+        groups: libvirt,wheel,docker
+        append: true
+        password: "{{ luka_password | password_hash }}"
+        state: present
+
+    - name: Add user luka to sudo
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/luka
+        create: true
+        owner: root
+        group: root
+        mode: '0440'
+        line: 'luka ALL=(ALL) ALL'
+
+- name: Include code packages install
+  ansible.builtin.import_playbook: install_core_packages.yaml

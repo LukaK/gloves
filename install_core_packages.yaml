@@ -1,0 +1,150 @@
+---
+
+
+- name: Install core packages and services
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+    - name: Install system packages
+      ansible.builtin.package:
+        state: present
+        name:
+          - base-devel
+          - linux-headers
+          - inetutils
+          - efibootmgr
+          - xdg-user-dirs
+          - xdg-utils
+          - alsa-utils
+          - pipewire
+          - pipewire-alsa
+          - pipewire-pulse
+          - pipewire-jack
+          - sof-firmware
+          - mtools
+          - dosfstools
+          - nfs-utils
+          - ntfs-3g
+          - gvfs
+          - gvfs-smb
+          - acpi
+          - acpi_call
+          - acpid
+          - bash-completion
+          - os-prober
+          - reflector
+          - pacman-contrib
+
+
+    - name: Start acpid
+      ansible.builtin.service:
+        name: acpid
+        state: started
+        enabled: true
+
+
+    - name: Start reflector
+      ansible.builtin.service:
+        name: reflector.timer
+        state: started
+        enabled: true
+
+
+    - name: Start fstrim
+      ansible.builtin.service:
+        name: fstrim.timer
+        state: started
+        enabled: true
+
+
+    - name: Install network tools
+      ansible.builtin.package:
+        state: present
+        name:
+          - dnsutils
+          - openbsd-netcat
+          - iptables-nft
+          - ipset
+          - net-tools
+          - networkmanager
+          - network-manager-applet
+          - dialog
+          - wpa_supplicant
+
+
+    - name: Start network manager
+      ansible.builtin.service:
+        name: NetworkManager
+        state: started
+        enabled: true
+
+
+    - name: Install core services
+      ansible.builtin.package:
+        state: present
+        name:
+          - cups
+          - cups-pdf
+          - bluez
+          - bluez-utils
+
+
+    - name: Start cups
+      ansible.builtin.service:
+        name: cups
+        state: started
+        enabled: true
+
+
+    - name: Start bluetooth
+      ansible.builtin.service:
+        name: bluetooth
+        state: started
+        enabled: true
+
+
+    # NOTE: Remove rsync and rclone when you setup backup on another server
+    - name: Install common utilities
+      ansible.builtin.package:
+        state: present
+        name:
+          - zip
+          - unzip
+          - pdftk
+          - ctags
+          - flatpak
+          - rsync
+          - rclone
+          - ansible
+          - openssh
+          - sshpass
+          # - avahi
+          # - nss-mdns
+
+
+    - name: Install fonts
+      ansible.builtin.package:
+        state: present
+        name:
+          - terminus-font
+
+
+    - name: Install virtualization tools
+      ansible.builtin.package:
+        state: present
+        name:
+          - virt-manager
+          - qemu-full
+          - edk2-ovmf
+          - bridge-utils
+          - dnsmasq
+          - vde2
+
+
+    - name: Start virtualization daemon
+      ansible.builtin.service:
+        name: libvirtd
+        state: started
+        enabled: true
