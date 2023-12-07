@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
 
-# TODO: redirect outputs
 function setup_and_mount_filesystems {
 
     local disc="$1"
 
     echo "Partitioning the disk $disc"
-    sgdisk -n 1:0:+800M -t 1:ef00 -n 2:801M $disc
+    sgdisk -n 1:0:+800M -t 1:ef00 -n 2:801M $disc > /dev/null
 
     local partition_1="$(fdisk -l $disc | tail -2 | head -1 | awk '{print $1}')"
     local partition_2="$(fdisk -l $disc | tail -1 | awk '{print $1}')"
 
     # format the disks
     echo "Formatting boot partition: ${partition_1}"
-    mkfs.fat -F32 "${partition_1}"
+    mkfs.fat -F32 "${partition_1}" > /dev/null
 
     echo "Encrypting root partition: ${partition_2}"
     cryptsetup --cipher aes-xts-plain64 --hash sha512 --use-random --verify-passphrase luksFormat "${partition_2}"
+
+    echo "Decrypting root partition"
     cryptsetup luksOpen "${partition_2}" root
 
     echo "Formatting root partition"
-    mkfs.btrfs /dev/mapper/root
+    mkfs.btrfs /dev/mapper/root > /dev/null
 
     # create subvolumes
     echo "Creating btrfs subvolumes"
     mount /dev/mapper/root /mnt
-    pushd /mnt && btrfs subvolume create @ && btrfs subvolume create @home && popd
+    pushd /mnt && btrfs subvolume create @ > /dev/null && btrfs subvolume create @home > /dev/null && popd
     umount /mnt
 
     echo "Mounting partitions"
@@ -48,12 +49,10 @@ function bootstrap_system {
     fi
     echo "Processor package selected: ${ucode_package}"
 
-    pacstrap /mnt base linux linux-firmware git vim $ucode_package
+    pacstrap /mnt base linux linux-firmware git vim ansible $ucode_package
     genfstab -U /mnt >> /mnt/etc/fstab
 }
 
-# TODO: Test this
-# TODO: Uncomment reboot
 # TODO: Ensure that directory is where this script is
 function chroot_and_execute {
     local disc="$1"
