@@ -90,11 +90,20 @@
           options cryptdevice=UUID={{ deviceuuid }}:root root=UUID={{ rootuuid }} rootflags=subvol=@ rw
 
 
-# TODO: Implement
-# - name: User management
-#   hosts: localhost
-#   connection: local
-#   gather_facts: false
-#   tasks:
-#
-#     - name: Update root password
+- name: User management
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_prompt:
+
+    - name: root_password
+      prompt: "Enter root password"
+      private: true
+
+  tasks:
+
+    - name: Update root password
+      ansible.builtin.user:
+        name: root
+        update_password: always
+        password: "{{root_password}}"
