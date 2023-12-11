@@ -6,16 +6,19 @@
   gather_facts: false
   tasks:
 
+
     - name: Ensure disc variable is set
       ansible.builtin.assert:
         that: disc is defined
         fail_msg: "Disc variable is not set"
+
 
 - name: Create inital ram disc image
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
+
 
     # TODO: Fix regex for modules to check if btrfs module is allready there
     - name: Update initramfs configuration
@@ -39,11 +42,13 @@
       # failed_when: mkinitcpio_result.rc != 0
       failed_when: false
 
+
 - name: Configure bootloader
   hosts: localhost
   connection: local
   gather_facts: true
   tasks:
+
 
     - name: Find disc uuid information
       set_fact:
@@ -90,11 +95,38 @@
           options cryptdevice=UUID={{ deviceuuid }}:root root=UUID={{ rootuuid }} rootflags=subvol=@ rw
 
 
-- name: Include code packages install
-  ansible.builtin.import_playbook: install_core_packages.yaml
-
 - name: Configure system
-  ansible.builtin.import_playbook: configure_system.yaml
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+
+    - name: Ensure timezone is set
+      community.general.timezone:
+        name: "{{ timezone }}"
+        hwclock: local
+
+
+    - name: Ensure hostname is set
+      ansible.builtin.lineinfile:
+        path: /etc/hostname
+        regexp: "^"
+        line: "{{ hostname }}"
+
+
+    - name: Ensure hosts file is set
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: "^127.0.0.1"
+        line: "127.0.0.1 {{ hostname }}"
+
+
+    - name: Generate locale
+      community.general.locale_gen:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ locale_list }}"
 
 
 - name: User management
@@ -108,12 +140,8 @@
       private: true
       confirm: true
 
-    - name: luka_password
-      prompt: "Enter luka password"
-      private: true
-      confirm: true
-
   tasks:
+
 
     - name: Update root password
       ansible.builtin.user:
@@ -121,19 +149,182 @@
         update_password: always
         password: "{{ root_password | password_hash }}"
 
-    - name: Add user luka
-      ansible.builtin.user:
-        name: luka
-        groups: libvirt,wheel,docker
-        append: true
-        password: "{{ luka_password | password_hash }}"
-        state: present
 
-    - name: Add user luka to sudo
-      ansible.builtin.lineinfile:
-        path: /etc/sudoers.d/luka
-        create: true
-        owner: root
-        group: root
-        mode: '0440'
-        line: 'luka ALL=(ALL) ALL'
+- name: Install core packages and services
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+
+    - name: Install system packages
+      community.general.pacman:
+        state: present
+        update_cache: true
+        name:
+          - base-devel
+          - linux-headers
+          - inetutils
+          - efibootmgr
+          - xdg-user-dirs
+          - xdg-utils
+          - alsa-utils
+          - pipewire
+          - pipewire-alsa
+          - pipewire-pulse
+          - pipewire-jack
+          - sof-firmware
+          - mtools
+          - dosfstools
+          - nfs-utils
+          - ntfs-3g
+          - gvfs
+          - gvfs-smb
+          - acpi
+          - acpi_call
+          - acpid
+          - bash-completion
+          - os-prober
+          - reflector
+          - pacman-contrib
+          - docker
+
+
+    - name: Start acpid
+      ansible.builtin.service:
+        name: acpid
+        state: started
+        enabled: true
+
+
+    - name: Start reflector
+      ansible.builtin.service:
+        name: reflector.timer
+        state: started
+        enabled: true
+
+
+    - name: Start docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+
+    - name: Start fstrim
+      ansible.builtin.service:
+        name: fstrim.timer
+        state: started
+        enabled: true
+
+
+    # TODO: Fix nftables
+    - name: Install network tools
+      community.general.pacman:
+        state: present
+        update_cache: true
+        name:
+          - dnsutils
+          - openbsd-netcat
+          # - iptables-nft
+          - ipset
+          - net-tools
+          - networkmanager
+          - network-manager-applet
+          - dialog
+          - wpa_supplicant
+          - ufw
+
+
+    - name: Start network manager
+      ansible.builtin.service:
+        name: NetworkManager
+        state: started
+        enabled: true
+
+
+    - name: Start firewall service
+      ansible.builtin.service:
+        name: ufw
+        state: started
+        enabled: true
+
+
+    - name: Install core services
+      community.general.pacman:
+        state: present
+        update_cache: true
+        name:
+          - cups
+          - cups-pdf
+          - bluez
+          - bluez-utils
+
+
+    - name: Start cups
+      ansible.builtin.service:
+        name: cups
+        state: started
+        enabled: true
+
+
+    - name: Start bluetooth
+      ansible.builtin.service:
+        name: bluetooth
+        state: started
+        enabled: true
+
+
+    # NOTE: Remove rsync and rclone when you setup backup on another server
+    - name: Install common utilities
+      community.general.pacman:
+        state: present
+        update_cache: true
+        name:
+          - zip
+          - unzip
+          - pdftk
+          - ctags
+          - flatpak
+          - rsync
+          - rclone
+          - ansible
+          - openssh
+          - sshpass
+          # - avahi
+          # - nss-mdns
+
+
+    - name: Start sshd
+      ansible.builtin.service:
+        name: sshd
+        state: started
+        enabled: true
+
+
+    - name: Install fonts
+      community.general.pacman:
+        state: present
+        update_cache: true
+        name:
+          - terminus-font
+
+
+    - name: Install virtualization tools
+      community.general.pacman:
+        state: present
+        update_cache: true
+        name:
+          - virt-manager
+          - qemu-full
+          - edk2-ovmf
+          - bridge-utils
+          - dnsmasq
+          - vde2
+
+
+    - name: Start virtualization daemon
+      ansible.builtin.service:
+        name: libvirtd
+        state: started
+        enabled: true
