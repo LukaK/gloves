@@ -1,0 +1,5 @@
+---
+
+hostname: workstation
+timezone: Europe/Zagreb
+locale_list: ["en_US.UTF-8", "hr_HR.UTF-8"]

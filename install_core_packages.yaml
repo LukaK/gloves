@@ -1,7 +1,6 @@
 ---
 # TODO: Add other core packages
 
-
 - name: Install core packages and services
   hosts: localhost
   connection: local
@@ -82,11 +81,18 @@
           - network-manager-applet
           - dialog
           - wpa_supplicant
+          - ufw
 
 
     - name: Start network manager
       ansible.builtin.service:
         name: NetworkManager
+        state: started
+        enabled: true
+
+    - name: Start firewall service
+      ansible.builtin.service:
+        name: ufw
         state: started
         enabled: true
 

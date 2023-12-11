@@ -93,6 +93,9 @@
 - name: Include code packages install
   ansible.builtin.import_playbook: install_core_packages.yaml
 
+- name: Configure system
+  ansible.builtin.import_playbook: configure_system.yaml
+
 
 - name: User management
   hosts: localhost
