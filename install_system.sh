@@ -61,7 +61,7 @@ function chroot_and_execute {
     cp -r "${script_dir}" /mnt
 
     echo "Executing setup script"
-    arch-chroot /mnt /bin/bash -c "cd gloves && ansible-playbook -e \"disc=${disc}\" --ask-vault-pass setup_system.yaml"
+    arch-chroot /mnt /bin/bash -c "cd gloves && ansible-playbook -e \"disc=${disc}\" setup_system.yaml"
 
     echo "Removing setup script"
     rm -rf /mnt/gloves
