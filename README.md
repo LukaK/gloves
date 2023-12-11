@@ -9,6 +9,10 @@ Setup:
 - creates basic system configuration ( locale, hostname, ... )
 - creates ansible user and adds public key for ssh access
 
+Technologies:
+- bash
+- ansible
+
 ### Usage
 
 ```
