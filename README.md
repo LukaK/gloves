@@ -8,3 +8,9 @@ Setup:
 - installs core packages and enables core services
 - creates basic system configuration ( locale, hostname, ... )
 - creates ansible user and adds public key for ssh access
+
+### Usage
+
+```
+bash install_system.sh -d <disc>
+```
