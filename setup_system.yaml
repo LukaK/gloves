@@ -164,6 +164,7 @@
         mode: '0440'
 
 
+# TODO: Remove extra packages that are not needed for bootstrap
 - name: Install core packages and services
   hosts: localhost
   connection: local
