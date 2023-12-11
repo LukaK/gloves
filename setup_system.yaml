@@ -20,7 +20,6 @@
   tasks:
 
 
-    # TODO: Fix regex for modules to check if btrfs module is allready there
     - name: Update initramfs configuration
       ansible.builtin.lineinfile:
         path: /etc/mkinitcpio.conf
