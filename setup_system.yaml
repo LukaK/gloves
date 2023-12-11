@@ -135,12 +135,29 @@
   gather_facts: false
   tasks:
 
-
-    - name: Update root password
+    - name: Ensure ansible user present
       ansible.builtin.user:
-        name: root
-        update_password: always
-        password: "{{ root_pass | password_hash }}"
+        name: ansible
+        password_lock: true
+
+
+    - name: Ensure ssh key configuration for ansible user
+      ansible.posix.authorized_key:
+        user: ansible
+        state: present
+        exclusive: true
+        key: "{{ ansible_public_key }}"
+
+
+    - name: Create sudoers entry for ansible user
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/ansible
+        line: "ansible ALL = (ALL) NOPASSWD: ALL"
+        state: present
+        create: true
+        owner: root
+        group: root
+        mode: '0440'
 
 
 - name: Install core packages and services
