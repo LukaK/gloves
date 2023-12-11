@@ -133,13 +133,6 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  vars_prompt:
-
-    - name: root_password
-      prompt: "Enter root password"
-      private: true
-      confirm: true
-
   tasks:
 
 
@@ -147,7 +140,7 @@
       ansible.builtin.user:
         name: root
         update_password: always
-        password: "{{ root_password | password_hash }}"
+        password: "{{ root_pass | password_hash }}"
 
 
 - name: Install core packages and services
