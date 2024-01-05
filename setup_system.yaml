@@ -32,7 +32,6 @@
         - {regexp: '^HOOKS=(.*) block filesystems (.*)$', line: 'HOOKS=\1 block encrypt filesystems \2'}
 
 
-    # TODO: Trigger it with handlers
     # TODO: Uncomment fail condition when issue with exit codes is fixed
     - name: Execute mkinitcpio command
       ansible.builtin.command: /usr/bin/mkinitcpio -p linux
@@ -164,7 +163,6 @@
         mode: '0440'
 
 
-# TODO: Remove extra packages that are not needed for bootstrap
 - name: Install core packages and services
   hosts: localhost
   connection: local
@@ -202,7 +200,6 @@
           - os-prober
           - reflector
           - pacman-contrib
-          - docker
 
 
     - name: Start acpid
@@ -215,13 +212,6 @@
     - name: Start reflector
       ansible.builtin.service:
         name: reflector.timer
-        state: started
-        enabled: true
-
-
-    - name: Start docker
-      ansible.builtin.service:
-        name: docker
         state: started
         enabled: true
 
@@ -249,6 +239,8 @@
           - dialog
           - wpa_supplicant
           - ufw
+          - openssh
+          - sshpass
 
 
     - name: Start network manager
@@ -265,81 +257,8 @@
         enabled: true
 
 
-    - name: Install core services
-      community.general.pacman:
-        state: present
-        update_cache: true
-        name:
-          - cups
-          - cups-pdf
-          - bluez
-          - bluez-utils
-
-
-    - name: Start cups
-      ansible.builtin.service:
-        name: cups
-        state: started
-        enabled: true
-
-
-    - name: Start bluetooth
-      ansible.builtin.service:
-        name: bluetooth
-        state: started
-        enabled: true
-
-
-    # NOTE: Remove rsync and rclone when you setup backup on another server
-    - name: Install common utilities
-      community.general.pacman:
-        state: present
-        update_cache: true
-        name:
-          - zip
-          - unzip
-          - pdftk
-          - ctags
-          - flatpak
-          - rsync
-          - rclone
-          - ansible
-          - openssh
-          - sshpass
-          # - avahi
-          # - nss-mdns
-
-
     - name: Start sshd
       ansible.builtin.service:
         name: sshd
-        state: started
-        enabled: true
-
-
-    - name: Install fonts
-      community.general.pacman:
-        state: present
-        update_cache: true
-        name:
-          - terminus-font
-
-
-    - name: Install virtualization tools
-      community.general.pacman:
-        state: present
-        update_cache: true
-        name:
-          - virt-manager
-          - qemu-full
-          - edk2-ovmf
-          - bridge-utils
-          - dnsmasq
-          - vde2
-
-
-    - name: Start virtualization daemon
-      ansible.builtin.service:
-        name: libvirtd
         state: started
         enabled: true
